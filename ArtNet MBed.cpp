@@ -65,7 +65,7 @@ Preset preset6 = createPreset(&led6, '6');
 Preset* presets[6] = {&preset1, &preset2, &preset3, &preset4, &preset5, &preset6};
 
 
-void fetchButtons() {
+void fetchButtons() {//fetches Buttons and changes the preset selected based on button pressed
 while(1) {
     for (int i = 0; i < NUM_BUTTONS; ++i) {
         prevState[i] = currState[i];
@@ -84,7 +84,7 @@ while(1) {
 }
 }
 
-void sendArtDmx(void const *args) {
+void sendArtDmx(void const *args) { //reads from file specified by outputFile and sends the proper packets based on preset
 
   broadcast.set_address("255.255.255.255", 6454);
   FILE* outputFile;
@@ -109,7 +109,7 @@ void sendArtDmx(void const *args) {
     }
 }
 
-void checkForReset(void const * args) {
+void checkForReset(void const * args) { //simply checks if receiving the string reset, and if so soft resets the MBED
     while(1) {
     if (pc.readable()) {
         if (pc.getc() == 'R') {
@@ -127,7 +127,7 @@ void checkForReset(void const * args) {
     }
 }
 
-void PULSE_LEDS(void const* args) {
+void PULSE_LEDS(void const* args) { //pulses LEDs on startup
     while(1) {
         for(float i = 0.0f; i <= 1.0f; i += 0.05f) {
             for (int j = 0; j < NUM_BUTTONS; ++j) {
@@ -145,23 +145,23 @@ void PULSE_LEDS(void const* args) {
 }
 
 int main() {
-    Thread temp(PULSE_LEDS, NULL);
+    Thread temp(PULSE_LEDS, NULL); // Pulses LEDs on startup
     for (int i = 0; i < NUM_BUTTONS; ++i) {
-        buttons[i].mode(PullUp);
+        buttons[i].mode(PullUp); //Set mode to internal pullup for each of the 6 buttons
     }
     net.init("2.0.0.1", "255.255.255.255", "0.0.0.0");
     net.connect();
     sock.init();
     sock.set_broadcasting();
-    temp.terminate();
+    temp.terminate(); //we have successfully connected so terminate bootup thread
     for (int i = 0; i < NUM_BUTTONS; ++i) {
-        *presets[i]->led = 0.0f;
+        *presets[i]->led = 0.0f; 
     }
     green = 1;
 
-    Thread t1(sendArtDmx, NULL);
-    Thread t2(checkForReset, NULL);
-
+    Thread t1(sendArtDmx, NULL); //spin up thread to send the packets to control lighting
+    Thread t2(checkForReset, NULL); //spin up thread to check for reset
+    //main thread, just fetches buttons to constantly update chosen preset
     while(1) {
     fetchButtons();
     return 1;
